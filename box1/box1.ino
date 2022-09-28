@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 // pr : photoresistor
 // vb : vibration sensor
 // bp : bumper
@@ -50,6 +52,19 @@ const int bp1LEDs = 10;
 // motors
 
 
+// Timer Event function
+void timerEvent(void (*function)(bool), unsigned long *clock, 
+                bool condition, unsigned long start, 
+                unsigned long stop, unsigned long reset) {
+  
+  if (start <= *clock && *clock <= stop) {
+    function(condition);
+    Serial.println(*clock);
+  }
+  if (*clock > reset) {
+    *clock = 0;
+  }
+}
 
 void setup()
 {
@@ -74,10 +89,8 @@ void loop()
   movePaddle(pr2Output < paddleLightSensitivity, 9, &button2IsPressed);
   
   
-  if (digitalRead(vb1) == HIGH && bp1Timer >= 1000) {
-    bp1Timer = 0;
-    Serial.println("vb1");
-  }
+  timerEvent(&test, &bp1Timer, (digitalRead(vb1) == HIGH), 300, 800, 5000);
+  
   
   
   
@@ -88,13 +101,12 @@ void loop()
 }
 
 
-void updateTime() {
-  deltaTime = millis() - previousTickTime;
-  previousTickTime = millis();
-}
-
-void addTime(unsigned long *timer) {
-  *timer += deltaTime;
+void test(bool condition) {
+  if (condition) {
+    Serial.println("test success - true"); 
+  } else {
+    Serial.println("test success - false"); 
+  }
 }
 
 
@@ -125,6 +137,9 @@ void bumper(int input, int output, int timeActive) {
   
 }
 
+//
+
+
 
 // blinkPin
 // function starts by modding time by mod, giving a repeating
@@ -139,4 +154,14 @@ void blinkPin(int start, int stop, int mod, int PIN) {
   } else if (start <= calc) {
     digitalWrite(PIN, HIGH);
   }
+}
+
+// time stuff
+void updateTime() {
+  deltaTime = millis() - previousTickTime;
+  previousTickTime = millis();
+}
+
+void addTime(unsigned long *timer) {
+  *timer += deltaTime;
 }
