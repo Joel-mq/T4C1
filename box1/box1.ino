@@ -17,6 +17,7 @@
 /* SERVO PINS *//*
   8: Servo1
   9: Servo2
+  10: Servo3
 
 /* VIBRATION PINS *//*
   11: vb1
@@ -27,6 +28,7 @@
   A1: button1 (photoresistor)
   A2: button2 (photoresistor)
   A3: sensor (photoresistor)
+  A4: sensor (photoresistor)
 */
 
 
@@ -69,7 +71,9 @@ int lightMIN = 100;
 
 // photoresistor
 int pr3Output = 0;
+int pr4Output = 0;
 const int pr3 = A3;
+const int pr4 = A4;
 
 
 // vibration sensors
@@ -78,16 +82,17 @@ const int vb2 = 12;
 const int vb3 = 13;
 
 // LEDs - bp : bumper
-int bp1LEDs = 5;
-int bp2LEDs = 6;
-int bp3LEDs = 7;
+const int bp1LEDs = 5;
+const int bp2LEDs = 6;
+const int bp3LEDs = 7;
 
 
 // Servos
 Servo servo1;
 Servo servo2;
+Servo servo3;
 
-
+// TODO
 int openAngle;
 
 
@@ -117,6 +122,7 @@ void setup()
   // Servos
   servo1.attach(8);
   servo2.attach(9);
+  servo2.attach(10);
   
   // vibration sensors
   pinMode(vb1, INPUT);
@@ -158,14 +164,6 @@ void loop()
 }
 
 
-void test(bool condition) {
-  if (condition) {
-    Serial.println("test success"); 
-  } else {
-    Serial.println("test failure"); 
-  }
-}
-
 // !!! !!! !!!
 // TODO, ADJUST POSITION OF SERVOS
 // !!! !!! !!!
@@ -201,6 +199,11 @@ void movePaddle(bool input, int servoMove, bool *buttonState) {
   }
 }
 
+
+// TODO: rotate lower disk
+void rotateDisk() {
+  
+}
 
 // bumperEvent function
 // only runs if *clock has elapsed enough time
