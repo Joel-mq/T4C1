@@ -1,7 +1,6 @@
 #include <Servo.h>
 #include <stdio.h>
 
-Servo myservo;
 
 
 // pr : photoresistor
@@ -10,14 +9,24 @@ Servo myservo;
 
 // PINS
 
+/* LED PINS *//*
+  5: LED1
+  6: LED2
+  7: LED3
+
 /* SERVO PINS *//*
   8: Servo1
   9: Servo2
 
+/* VIBRATION PINS *//*
+  11: vb1
+  12: vb2
+  13: vb3
+  
 /* ANALOG PINS *//*
   A1: button1 (photoresistor)
   A2: button2 (photoresistor)
-    A3: sensor (photoresistor)
+  A3: sensor (photoresistor)
 */
 
 
@@ -41,8 +50,8 @@ unsigned long timeSinceLastButtonInput = 0;
 //          the sake of readability they are buttons)
 int button1Output = 0;
 int button2Output = 0;
-const int bt1 = A0;
-const int bt2 = A1;
+const int bt1 = A1;
+const int bt2 = A2;
 
 bool button1IsPressed = false;
 bool button2IsPressed = false;
@@ -60,7 +69,7 @@ int lightMIN = 100;
 
 // photoresistor
 int pr3Output = 0;
-const int pr3 = A2;
+const int pr3 = A3;
 
 
 // vibration sensors
@@ -68,12 +77,15 @@ const int vb1 = 11;
 const int vb2 = 12;
 const int vb3 = 13;
 
-// LEDs
-const int bp1LEDs = 10;
+// LEDs - bp : bumper
+int bp1LEDs = 5;
+int bp2LEDs = 6;
+int bp3LEDs = 7;
 
 
 // Servos
-
+Servo servo1;
+Servo servo2;
 
 
 int openAngle;
@@ -93,14 +105,24 @@ void timerEvent(void (*function)(bool), unsigned long *clock,
   }
 }
 
+
 void setup()
 {
   Serial.begin(9600);
+  // LEDs - bumpers
+  pinMode(bp1LEDs, OUTPUT);
+  pinMode(bp2LEDs, OUTPUT);
+  pinMode(bp3LEDs, OUTPUT);
+  
+  // Servos
+  servo1.attach(8);
+  servo2.attach(9);
+  
+  // vibration sensors
   pinMode(vb1, INPUT);
   pinMode(vb2, INPUT);
   pinMode(vb3, INPUT);
-  myservo.attach(8);
-  //servo2.attach(9);
+  
 }
 
 
@@ -110,16 +132,21 @@ void loop()
   updateTime();
   
   // other timer stuff
+  addTime(&time);
   addTime(&bp1Timer);
+  addTime(&bp2Timer);
+  addTime(&bp3Timer);
   
-  button1Output = analogRead(A1);
-  //button2Output = analogRead(A2);
+  button1Output = analogRead(bt1);
+  button2Output = analogRead(bt2);
   //Serial.println(analogRead(A1));
   movePaddle(button1Output < lightMIN, 1, &button1IsPressed);
-  //movePaddle(button2Output < lightMIN, &servo2, &button2IsPressed);
+  movePaddle(button2Output < lightMIN, 2, &button2IsPressed);
   
   
-  //timerEvent(&test, &bp1Timer, (digitalRead(vb1) == HIGH), 300, 800, 5000);
+  bumperEvent(bp1LEDs, &bp1Timer, (digitalRead(vb1) == HIGH), 1600, 1600);
+  bumperEvent(bp2LEDs, &bp2Timer, (digitalRead(vb2) == HIGH), 1600, 1600);
+  bumperEvent(bp3LEDs, &bp3Timer, (digitalRead(vb3) == HIGH), 1600, 1600);
   
   
   
@@ -139,30 +166,57 @@ void test(bool condition) {
   }
 }
 
+// !!! !!! !!!
+// TODO, ADJUST POSITION OF SERVOS
+// !!! !!! !!!
 
 // movePaddle
 // *buttonState is required make sure the code runs once, meaning a paddle
 // can move to it's target location without spamming code
-void movePaddle(bool input, int temp, bool *buttonState) {
+// servoMove either 1 or 2, Left: 1, Right: 2, hardcoded as angles differ
+void movePaddle(bool input, int servoMove, bool *buttonState) {
   if (input && !*buttonState) {
     Serial.println("Input recieved, set pin: to HIGH"); 
     *buttonState = true;
     
-    myservo.write(180);
+    if (servoMove == 1) {
+      servo1.write(180);
+    } else if (servoMove == 2) {
+      servo2.write(180);
+    } else {
+      Serial.println("ERROR: invalid servoMove value in movePaddle"); 
+    }
   }
   if (!input && *buttonState) {
     Serial.println("No input recieved, set pin: to LOW"); 
     *buttonState = false;
     
-    myservo.write(0);
+    if (servoMove == 1) {
+      servo1.write(0);
+    } else if (servoMove == 2) {
+      servo2.write(0);
+    } else {
+      Serial.println("ERROR: invalid servoMove value in movePaddle"); 
+    }
   }
 }
 
 
-void bumper(int input, int output, int timeActive) {
+// bumperEvent function
+// only runs if *clock has elapsed enough time
+void bumperEvent(int pin, unsigned long *clock, 
+                bool condition, unsigned long start, 
+                unsigned long reset) {
+  digitalWrite(pin, LOW); // to ensure blinkPin doesn't leave the LED on HIGH
+  if (*clock > reset && condition) {
+    *clock = 0;
+  }
+  if (*clock <= start) {
+    blinkPin(0, 200, 400, pin);
+  }
   
+  //Serial.println(*clock);
 }
-
 
 
 // blinkPin
@@ -170,13 +224,13 @@ void bumper(int input, int output, int timeActive) {
 // timer based on how short mod is (in ms)
 // once this timer reaches start, LED at PIN set to HIGH
 // once timer reaches stop, LED at PIN set to LOW
-void blinkPin(int start, int stop, int mod, int PIN) {
+void blinkPin(int start, int stop, int mod, int pin) {
   int calc = time % mod;
-  //Serial.println(calc);
+  Serial.println(calc);
   if (stop <= calc) {
-    digitalWrite(PIN, LOW);
+    digitalWrite(pin, LOW);
   } else if (start <= calc) {
-    digitalWrite(PIN, HIGH);
+    digitalWrite(pin, HIGH);
   }
 }
 
