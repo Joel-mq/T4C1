@@ -108,6 +108,8 @@ Servo servo3;
 bool servo3toMove = false;
 bool servo3Moving = false;
 
+int angleOfMovement = 30;
+
 
 
 int current = 0;
@@ -147,6 +149,12 @@ void setup()
   pinMode(vb1, INPUT_PULLUP);
   //pinMode(vb2, INPUT_PULLUP);
   //pinMode(vb3, INPUT_PULLUP);
+  
+  
+  // set motors to default position
+  servo1.write(angleOfMovement);
+  servo2.write(0);
+  servo3.write(120);
   
 }
 
@@ -213,11 +221,11 @@ void movePaddle(bool input, int servoMove, bool *buttonState, unsigned long *tim
     *timer = 0;
     
     if (servoMove == 1) {
-      servo1.write(180);
+      servo1.write(angleOfMovement);
       Serial.println("Button 1 HIGH");
       
     } else if (servoMove == 2) {
-      servo2.write(180);
+      servo2.write(0);
       Serial.println("Button 2 HIGH");
       
     } else {
@@ -233,7 +241,7 @@ void movePaddle(bool input, int servoMove, bool *buttonState, unsigned long *tim
       lightMAXButton1 = button1Output;
       Serial.println("Button 1 LOW");
     } else if (servoMove == 2) {
-      servo2.write(0);
+      servo2.write(angleOfMovement);
       lightMAXButton2 = button2Output;
       Serial.println("Button 2 LOW");
     } else {
