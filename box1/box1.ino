@@ -33,7 +33,7 @@
 
 
 // all time units in ms
-unsigned long time = 0;
+unsigned long timet = 0;
 unsigned long LOOP_TIME = 10000;
 unsigned long previousTickTime = 0;
 unsigned long deltaTime = 0;
@@ -152,8 +152,8 @@ void setup()
   
   
   // set motors to default position
-  servo1.write(angleOfMovement);
-  servo2.write(0);
+  servo1.write(65);
+  servo2.write(60);
   servo3.write(120);
   
 }
@@ -165,7 +165,7 @@ void loop()
   updateTime();
   
   // other timer stuff
-  addTime(&time);
+  addTime(&timet);
   addTime(&bp1Timer);
   //addTime(&bp2Timer);
   //addTime(&bp3Timer);
@@ -174,28 +174,33 @@ void loop()
   addTime(&servo2Timer);
   
   button1Output = analogRead(bt1);
-  button2Output = analogRead(bt2);
+  //button2Output = analogRead(bt2);
   lightMax(button1Output, &lightMAXButton1);
-  lightMax(button2Output, &lightMAXButton2);
-  //Serial.println(lightMAXButton1);
+  //lightMax(button2Output, &lightMAXButton2);
+  Serial.println(button1Output);
   movePaddle(button1Output < lightMAXButton1 / 2, 1, &button1IsPressed, &servo1Timer);
-  movePaddle(button2Output < lightMAXButton2 / 2, 2, &button2IsPressed, &servo2Timer);
+  //movePaddle(button1Output < lightMAXButton1 / 2, 2, &button1IsPressed, &servo2Timer);
   
   
-  bumperEvent(bp1LEDs, &bp1Timer, (digitalRead(vb1) == HIGH), 1600, 1600);
+  bumperEvent(bp1LEDs, &bp1Timer, timet % 8000 > 2000, 1600, 1600);
   //(bp2LEDs, &bp2Timer, (digitalRead(vb2) == HIGH), 1600, 1600);
   //bumperEvent(bp3LEDs, &bp3Timer, (digitalRead(vb3) == HIGH), 1600, 1600);
   
   
   rotateDisk(&diskTimer);
   
-  
+  if (timet % 1000 > 500) {
+    digitalWrite(6, HIGH);
+  } else {
+    digitalWrite(6, LOW);
+  }
   
   
   // !!! !!! !!! IMPORTANT !!! !!! !!!
   // delay added as tinkercad panics when looping without a delay
   // can remove to test for final design, could make more responsive
-  delay(10);
+  //delay(10);
+
 }
 
 
@@ -221,11 +226,12 @@ void movePaddle(bool input, int servoMove, bool *buttonState, unsigned long *tim
     *timer = 0;
     
     if (servoMove == 1) {
-      servo1.write(angleOfMovement);
+      servo1.write(85);
+      servo2.write(40);
       Serial.println("Button 1 HIGH");
       
     } else if (servoMove == 2) {
-      servo2.write(0);
+      //servo1.write(70);
       Serial.println("Button 2 HIGH");
       
     } else {
@@ -237,11 +243,12 @@ void movePaddle(bool input, int servoMove, bool *buttonState, unsigned long *tim
     *buttonState = false;
     
     if (servoMove == 1) {
-      servo1.write(0);
+      servo1.write(65);
+      servo2.write(60);
       lightMAXButton1 = button1Output;
       Serial.println("Button 1 LOW");
     } else if (servoMove == 2) {
-      servo2.write(angleOfMovement);
+      //servo2.write(100);
       lightMAXButton2 = button2Output;
       Serial.println("Button 2 LOW");
     } else {
@@ -305,7 +312,7 @@ void bumperEvent(int pin, unsigned long *clock,
 // once this timer reaches start, LED at PIN set to HIGH
 // once timer reaches stop, LED at PIN set to LOW
 void blinkPin(int start, int stop, int mod, int pin) {
-  int calc = time % mod;
+  int calc = timet % mod;
   //Serial.println(calc);
   if (stop <= calc) {
     digitalWrite(pin, LOW);
