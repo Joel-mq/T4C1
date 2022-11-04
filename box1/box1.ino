@@ -55,6 +55,8 @@ unsigned long diskTimer = 1000;
 // timer for Autonomous paddles
 unsigned long paddleNotMovedTimer = 0;
 unsigned long movePaddlesTimer = 0;
+unsigned long autoPaddle = 0;
+unsigned long autoPaddle2 = 0;
 
 // buttons (which are actually photoresistors but for 
 //          the sake of readability they are buttons)
@@ -167,6 +169,8 @@ void loop()
   // other timer stuff
   addTime(&timet);
   addTime(&bp1Timer);
+  addTime(&autoPaddle);
+  addTime(&autoPaddle2);
   //addTime(&bp2Timer);
   //addTime(&bp3Timer);
   addTime(&servo1Timer);
@@ -178,8 +182,8 @@ void loop()
   lightMax(button1Output, &lightMAXButton1);
   //lightMax(button2Output, &lightMAXButton2);
   Serial.println(button1Output);
-  movePaddle(button1Output < lightMAXButton1 / 2, 1, &button1IsPressed, &servo1Timer);
-  //movePaddle(button1Output < lightMAXButton1 / 2, 2, &button1IsPressed, &servo2Timer);
+  movePaddle(button1Output < lightMAXButton1 / 2 || autoPaddle > 3000, 1, &button1IsPressed, &servo1Timer);
+  movePaddle(button1Output < lightMAXButton1 / 2 || autoPaddle2 > 2000, 2, &button2IsPressed, &servo2Timer);
   
   
   bumperEvent(bp1LEDs, &bp1Timer, timet % 8000 > 2000, 1600, 1600);
@@ -215,6 +219,7 @@ void lightMax(int value, int *lightMax) {
 // TODO, ADJUST POSITION OF SERVOS
 // !!! !!! !!!
 
+
 // movePaddle
 // *buttonState is required make sure the code runs once, meaning a paddle
 // can move to it's target location without spamming code
@@ -222,34 +227,40 @@ void lightMax(int value, int *lightMax) {
 void movePaddle(bool input, int servoMove, bool *buttonState, unsigned long *timer) {
   if (input && !*buttonState && *timer > 1000) {
     //Serial.println("Input recieved, set pin: to HIGH"); 
+    
     *buttonState = true;
     *timer = 0;
     
     if (servoMove == 1) {
       servo1.write(85);
-      servo2.write(40);
+      autoPaddle = 0;
+      
       Serial.println("Button 1 HIGH");
       
     } else if (servoMove == 2) {
-      //servo1.write(70);
+      servo2.write(40);
+      autoPaddle2 = 0;
       Serial.println("Button 2 HIGH");
       
     } else {
       Serial.println("ERROR: invalid servoMove value in movePaddle"); 
     }
   }
-  if (!input && *buttonState && *timer > 500) {
+  if (*buttonState && *timer > 500) {
     //Serial.println("No input recieved, set pin: to LOW"); 
+    
     *buttonState = false;
     
     if (servoMove == 1) {
+      autoPaddle = 0;
       servo1.write(65);
-      servo2.write(60);
+      
       lightMAXButton1 = button1Output;
       Serial.println("Button 1 LOW");
     } else if (servoMove == 2) {
-      //servo2.write(100);
-      lightMAXButton2 = button2Output;
+      autoPaddle2 = 0;
+      servo2.write(60);
+      lightMAXButton1 = button1Output;
       Serial.println("Button 2 LOW");
     } else {
       Serial.println("ERROR: invalid servoMove value in movePaddle"); 
@@ -259,7 +270,7 @@ void movePaddle(bool input, int servoMove, bool *buttonState, unsigned long *tim
 
 
 int marbleDelay = 2000;
-int marbleMove = 150;
+int marbleMove = 450;
 void rotateDisk(unsigned long *timer) {
  
   if (*timer > marbleMove * 2 + marbleDelay * 2 && !servo3Moving) {
@@ -268,19 +279,19 @@ void rotateDisk(unsigned long *timer) {
     //servo3.write(120);
   }
   if (0 <= *timer && *timer < marbleMove) {
-    servo3.write(60);
+    servo3.write(160);
   }
 
   if (marbleMove <= *timer && *timer < marbleMove + marbleDelay) {
-    servo3.write(120);
+    servo3.write(40);
   }
 
   if (marbleMove + marbleDelay <= *timer && *timer < marbleMove * 2 + marbleDelay) {
-    servo3.write(180);
+    servo3.write(160);
   }
   
   if (*timer > marbleMove * 2 + marbleDelay) {
-    servo3.write(120);
+    servo3.write(40);
     servo3Moving = false;
   }
 }
